@@ -169,6 +169,8 @@ public class AgentBehaviors : MonoBehaviour
                 if(seat != null)
                 {
                     currentState = AgentState.MovingToSeat;
+                    currentSeat = seat;
+                    seat.IsTaken = true;
                     agent.SetDestination(seat.gameObject.transform.position);
                     return;
                 }

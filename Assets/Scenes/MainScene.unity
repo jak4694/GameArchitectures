@@ -59090,7 +59090,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5b001ba6b35ec6488d2e68ca1b1693b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxAgentCount: 100
+  maxAgentCount: 60
   agentPrefab: {fileID: 3683609095408194768, guid: f6291da956ca42f45b84702611911405, type: 3}
   agentSpawnLocation: {fileID: 718299477}
   cafeteriaEntrance: {fileID: 787686729}

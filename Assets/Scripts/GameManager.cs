@@ -12,15 +12,7 @@ public class GameManager : MonoBehaviour
     private Camera mainCamera;
     private static GameManager instance;
     public static GameManager Instance { get { return instance; } }
-    [SerializeField]
-    private int maxAgentCount = 60;
-    private int currentAgentCount = 0;
-    private int newAgentID = 1;
-    private bool waitingForAgentsToLeave = false;
-    [SerializeField]
-    private GameObject agentPrefab = null;
-    [SerializeField]
-    private Transform agentSpawnLocation;
+    [Header("Cafeteria")]
     [SerializeField]
     private Transform cafeteriaEntrance = null;
     [SerializeField]
@@ -34,14 +26,24 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private DestinationArea drinkArea = null;
     [SerializeField]
-    private Transform cafeteriaExit = null;
-    [SerializeField]
     private SeatingArea seatingArea = null;
+    [Header("Office")]
+    [SerializeField]
+    private Transform[] breakAreaDrinks;
+    [SerializeField]
+    private DestinationArea breakRoom = null;
+    [SerializeField]
+    private DestinationArea[] outsideAreas = null;
+    [SerializeField]
+    private Transform[] securityWaypoints;
+    [SerializeField]
+    private Transform[] warehouseDestinations;
+    [Header("Other")]
     [SerializeField]
     private TextMeshProUGUI infoText = null;
     [SerializeField]
     private GameObject UI = null;
-    private AgentBehaviors currentlySelectedAgent = null;
+    private Agent currentlySelectedAgent = null;
 
     /// <summary>
     /// Property to get the destination for the cafeteria entrance
@@ -74,14 +76,46 @@ public class GameManager : MonoBehaviour
     public Vector3 DrinkAreaDestination { get { return drinkArea.DestinationWithinArea(); } }
 
     /// <summary>
-    /// Property to get the destination for the cafeteria exit
-    /// </summary>
-    public Vector3 CafeteriaExit { get { return cafeteriaExit.position; } }
-
-    /// <summary>
     /// Property to get the seating area for the cafeteria
     /// </summary>
     public SeatingArea SeatingArea { get { return seatingArea; } }
+
+    /// <summary>
+    /// Property to get the break area drinks
+    /// </summary>
+    public Transform BreakAreaDrinks
+    {
+        get { return breakAreaDrinks[Random.Range(0, breakAreaDrinks.Length)]; }
+    }
+
+    /// <summary>
+    /// Property to get the break room area
+    /// </summary>
+    public DestinationArea BreakRoom { get { return breakRoom; } }
+
+    /// <summary>
+    /// Property to get an outside area
+    /// </summary>
+    public DestinationArea Outside
+    {
+        get { return outsideAreas[Random.Range(0, outsideAreas.Length)]; }
+    }
+
+    /// <summary>
+    /// Property to get a security waypoint
+    /// </summary>
+    public Transform SecurityWaypoint
+    {
+        get { return securityWaypoints[Random.Range(0, securityWaypoints.Length)]; }
+    }
+
+    /// <summary>
+    /// Property to get a warehouse destination
+    /// </summary>
+    public Transform WarehouseDestination
+    {
+        get { return warehouseDestinations[Random.Range(0, warehouseDestinations.Length)]; }
+    }
 
     /// <summary>
     /// Set up the game manager singleton
@@ -104,7 +138,11 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         mainCamera = Camera.main;
-        SpawnAgent();
+        Agent[] agents = FindObjectsOfType<Agent>();
+        for(int i = 0; i < agents.Length; i++)
+        {
+            agents[i].GetComponentInChildren<Outline>().enabled = false;
+        }
     }
 
     /// <summary>
@@ -121,7 +159,7 @@ public class GameManager : MonoBehaviour
             RaycastHit raycastHit;
             if(Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out raycastHit))
             {
-                AgentBehaviors agentCheck = raycastHit.transform.gameObject.GetComponent<AgentBehaviors>();
+                Agent agentCheck = raycastHit.transform.gameObject.GetComponent<Agent>();
                 if(agentCheck)
                 {
                     if(currentlySelectedAgent != null)
@@ -139,42 +177,28 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            string text = "Agent ID: " + currentlySelectedAgent.ID + "\n";
-            text += "State: " + currentlySelectedAgent.CurrentState + "\n";
-            text += "Items Obtained:" + "\n" + currentlySelectedAgent.ItemsObtained;
+            string text = "Worker type: ";
+            if(currentlySelectedAgent is CubicleWorker)
+            {
+                text += "Cubicle\n";
+            }
+            else if(currentlySelectedAgent is SecurityWorker)
+            {
+                text += "Security\n";
+            }
+            else if(currentlySelectedAgent is WarehouseWorker)
+            {
+                text += "Warehouse\n";
+            }
+            else
+            {
+                text += "Unknown\n";
+            }
+            text += "Hunger: " + currentlySelectedAgent.Hunger + "\n";
+            text += "Thirst: " + currentlySelectedAgent.Thirst + "\n";
+            text += "Restlessness: " + currentlySelectedAgent.Restlessness + "\n";
+            text += "Status: " + currentlySelectedAgent.CurrentStateString;
             infoText.text = text;
-        }
-    }
-
-    /// <summary>
-    /// Spawn in an agent
-    /// </summary>
-    private void SpawnAgent()
-    {
-        GameObject agent = Instantiate(agentPrefab, agentSpawnLocation);
-        agent.GetComponent<AgentBehaviors>().ID = newAgentID;
-        newAgentID++;
-        currentAgentCount++;
-        if(currentAgentCount < maxAgentCount)
-        {
-            Invoke("SpawnAgent", Random.Range(2f, 5f));
-        }
-        else
-        {
-            waitingForAgentsToLeave = true;
-        }
-    }
-
-    /// <summary>
-    /// Inform the game manager that an agent has despawned
-    /// </summary>
-    public void AgentDespawned()
-    {
-        currentAgentCount--;
-        if(waitingForAgentsToLeave)
-        {
-            waitingForAgentsToLeave = false;
-            SpawnAgent();
         }
     }
 }

@@ -15,8 +15,8 @@ public class Line : MonoBehaviour
     private float timeToCompleteAction = 15f;
     [SerializeField]
     private Transform[] spotsInLine;
-    private List<AgentBehaviors> agentsInLine = new List<AgentBehaviors>();
-    private List<AgentBehaviors> agentsWaitingForLine = new List<AgentBehaviors>();
+    private List<CafeteriaAgentBehaviors> agentsInLine = new List<CafeteriaAgentBehaviors>();
+    private List<CafeteriaAgentBehaviors> agentsWaitingForLine = new List<CafeteriaAgentBehaviors>();
 
     /// <summary>
     /// Property to get whether or not this is a line for food
@@ -33,7 +33,7 @@ public class Line : MonoBehaviour
     /// </summary>
     /// <param name="agent">The agent that wants to go into the line</param>
     /// <returns>True if the agent could get in line, false if it's full</returns>
-    public bool PutAgentInLine(AgentBehaviors agent)
+    public bool PutAgentInLine(CafeteriaAgentBehaviors agent)
     {
         //Add the agent to the line if there is a spot available
         if(agentsInLine.Count < spotsInLine.Length)
@@ -79,7 +79,7 @@ public class Line : MonoBehaviour
                 }
             }
             //Put the agent into the line
-            AgentBehaviors nextAgent = agentsWaitingForLine[indexOfClosestAgent];
+            CafeteriaAgentBehaviors nextAgent = agentsWaitingForLine[indexOfClosestAgent];
             agentsWaitingForLine.RemoveAt(indexOfClosestAgent);
             nextAgent.WaitForLineOver();
             agentsInLine.Add(nextAgent);

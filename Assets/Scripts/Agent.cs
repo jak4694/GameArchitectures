@@ -142,6 +142,7 @@ public abstract class Agent : MonoBehaviour
                 break;
             case AgentState.GoingOutside:
                 Invoke("ReturnToWork", Random.Range(15f, 40f));
+                currentState = AgentState.Outside;
                 WanderRoom(currentOutsideArea);
                 break;
             case AgentState.Outside:

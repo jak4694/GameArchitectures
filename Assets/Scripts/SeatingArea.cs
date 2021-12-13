@@ -35,4 +35,32 @@ public class SeatingArea : MonoBehaviour
         }
         return null;
     }
+
+    /// <summary>
+    /// Resets all seats to be not taken
+    /// </summary>
+    public void ResetSeats()
+    {
+        for(int i = 0; i < seats.Length; i++)
+        {
+            seats[i].IsTaken = false;
+        }
+    }
+
+    /// <summary>
+    /// Determine how many seats are taken
+    /// </summary>
+    /// <returns>The number of seats currently taken</returns>
+    public int NumberOfSeatsTaken()
+    {
+        int count = 0;
+        for(int i = 0; i < seats.Length; i++)
+        {
+            if(seats[i].IsTaken)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
 }

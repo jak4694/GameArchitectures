@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using cakeslice;
 
 /// <summary>
 /// Abstract agent class to handle the agent classes
@@ -18,6 +19,8 @@ public abstract class Agent : MonoBehaviour
     protected int hunger = 0;
     protected int thirst = 0;
     protected float restlessness = 0;
+    private Seat destinationSeat;
+    private MeetingRoom destinationMeeting;
 
     /// <summary>
     /// Property to get the nav mesh agent component
@@ -79,6 +82,7 @@ public abstract class Agent : MonoBehaviour
     /// </summary>
     protected void Start()
     {
+        OutlineEffect.Instance?.RemoveOutline(GetComponentInChildren<Outline>());
         agent = GetComponent<NavMeshAgent>();
         cafeteriaBehaviors = GetComponent<CafeteriaAgentBehaviors>();
         ReturnToWork();
@@ -123,7 +127,7 @@ public abstract class Agent : MonoBehaviour
             case AgentState.GoingToBreakRoom:
                 currentState = AgentState.InBreakRoom;
                 WanderRoom(GameManager.Instance.BreakRoom);
-                thirst--;
+                thirst = Mathf.Max(thirst - 1, 0);
                 Invoke("ReturnToWork", Random.Range(10f, 30f));
                 break;
             case AgentState.InBreakRoom:
@@ -151,7 +155,11 @@ public abstract class Agent : MonoBehaviour
                 }
                 break;
             case AgentState.GoingToMeeting:
-                currentState = AgentState.InMeeting;
+                if(Vector3.SqrMagnitude(transform.position - destinationSeat.transform.position) <= 4f)
+                {
+                    currentState = AgentState.InMeeting;
+                    destinationMeeting.NumberOfAgentsArrived++;
+                }
                 break;
             case AgentState.TalkingToAgent:
                 break;
@@ -267,6 +275,30 @@ public abstract class Agent : MonoBehaviour
     }
 
     /// <summary>
+    /// Go to a meeting if the agent isn't going to or in the cafeteria
+    /// </summary>
+    /// <param name="meetingRoom">The meeting room to go to</param>
+    /// <returns>True if the agent is going to the meeting; false otherwise</returns>
+    public bool GoToMeeting(MeetingRoom meetingRoom)
+    {
+        if(currentState != AgentState.Cafeteria)
+        {
+            Seat seat = meetingRoom.Seats.GetSeat();
+            if(seat == null)
+            {
+                return false;
+            }
+            currentState = AgentState.GoingToMeeting;
+            destinationMeeting = meetingRoom;
+            destinationSeat = seat;
+            CancelInvoke("ReturnToWork");
+            agent.destination = seat.transform.position;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Use trigger colliders to determine if the agent should talk to another or if they should stop talking when a manager passes by
     /// </summary>
     /// <param name="other">The other collider</param>
@@ -277,7 +309,7 @@ public abstract class Agent : MonoBehaviour
             agentTalkingTo.ReturnToWork();
             ReturnToWork();
         }
-        Agent otherAgent = GetComponent<Agent>();
+        Agent otherAgent = other.gameObject.GetComponent<Agent>();
         if(otherAgent && (currentState == AgentState.InBreakRoom || currentState == AgentState.Outside) &&
             (otherAgent.CurrentState == AgentState.InBreakRoom || otherAgent.CurrentState == AgentState.Outside))
         {

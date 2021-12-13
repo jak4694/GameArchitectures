@@ -17,7 +17,6 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
     private int hunger;
     private int initialThirst;
     private int thirsty;
-    private bool stayingToEat;
     private string desiredFood;
     private Line desiredLine;
     private Seat currentSeat;
@@ -82,8 +81,6 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
     {
         initialHunger = hunger = agentBehaviors.Hunger;
         initialThirst = thirsty = agentBehaviors.Thirst;
-        //The agent has an 90% chance of wanting to stay to eat
-        stayingToEat = Random.Range(0f, 1f) <= 0.9f;
         //Start the agent walking into the cafeteria
         currentState = AgentState.EnteringCafeteria;
         agent.SetDestination(GameManager.Instance.CafeteriaEntrance);
@@ -110,7 +107,6 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
                 break;
             case AgentState.ObtainingDrink:
                 thirsty--;
-                agentBehaviors.Thirst = thirsty;
                 itemsObtained.Add("Drink");
                 CheckWhichItemToObtain();
                 break;
@@ -119,7 +115,7 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
                 break;
             case AgentState.MovingToSeat:
                 currentState = AgentState.Eating;
-                Invoke("LeaveCafeteria", (initialHunger * 30) + ((initialThirst > 0) ? 20 : 0));
+                Invoke("LeaveCafeteria", (initialHunger * 10) + ((initialThirst > 0) ? 5 : 0));
                 break;
             default:
                 break;
@@ -154,17 +150,14 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
         }
         else if(currentState == AgentState.InLineToPay)
         {
-            if(stayingToEat)
+            Seat seat = GameManager.Instance.SeatingArea.GetSeat();
+            if(seat != null)
             {
-                Seat seat = GameManager.Instance.SeatingArea.GetSeat();
-                if(seat != null)
-                {
-                    currentState = AgentState.MovingToSeat;
-                    currentSeat = seat;
-                    seat.IsTaken = true;
-                    agent.SetDestination(seat.gameObject.transform.position);
-                    return;
-                }
+                currentState = AgentState.MovingToSeat;
+                currentSeat = seat;
+                seat.IsTaken = true;
+                agent.SetDestination(seat.gameObject.transform.position);
+                return;
             }
             LeaveCafeteria();
         }
@@ -253,6 +246,8 @@ public class CafeteriaAgentBehaviors : MonoBehaviour
         {
             currentSeat.IsTaken = false;
         }
+        agentBehaviors.Hunger = hunger;
+        agentBehaviors.Thirst = thirsty;
         agentBehaviors.Restlessness = Mathf.Max(agentBehaviors.Restlessness - 2, 0);
         agentBehaviors.ReturnToWork();
     }

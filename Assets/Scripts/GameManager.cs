@@ -38,12 +38,15 @@ public class GameManager : MonoBehaviour
     private Transform[] securityWaypoints;
     [SerializeField]
     private Transform[] warehouseDestinations;
+    [SerializeField]
+    private MeetingRoom[] meetingRooms;
     [Header("Other")]
     [SerializeField]
     private TextMeshProUGUI infoText = null;
     [SerializeField]
     private GameObject UI = null;
     private Agent currentlySelectedAgent = null;
+    private Manager currentlySelectedManager = null;
 
     /// <summary>
     /// Property to get the destination for the cafeteria entrance
@@ -118,6 +121,24 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Property to get the first available meeting room, or none if they're not available
+    /// </summary>
+    public MeetingRoom MeetingRoom
+    {
+        get
+        {
+            for(int i = 0; i < meetingRooms.Length; i++)
+            {
+                if(!meetingRooms[i].IsTaken)
+                {
+                    return meetingRooms[i];
+                }
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Set up the game manager singleton
     /// </summary>
     private void Awake()
@@ -133,16 +154,11 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Start spawning agents
+    /// Set the camera reference
     /// </summary>
     private void Start()
     {
         mainCamera = Camera.main;
-        Agent[] agents = FindObjectsOfType<Agent>();
-        for(int i = 0; i < agents.Length; i++)
-        {
-            agents[i].GetComponentInChildren<Outline>().enabled = false;
-        }
     }
 
     /// <summary>
@@ -160,22 +176,37 @@ public class GameManager : MonoBehaviour
             if(Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out raycastHit))
             {
                 Agent agentCheck = raycastHit.transform.gameObject.GetComponent<Agent>();
-                if(agentCheck)
+                Manager managerCheck = raycastHit.transform.gameObject.GetComponent<Manager>();
+                if(agentCheck || managerCheck)
                 {
                     if(currentlySelectedAgent != null)
                     {
                         currentlySelectedAgent.gameObject.GetComponentInChildren<Outline>().enabled = false;
+                        currentlySelectedAgent = null;
                     }
-                    currentlySelectedAgent = agentCheck;
-                    currentlySelectedAgent.gameObject.GetComponentInChildren<Outline>().enabled = true;
+                    if(currentlySelectedManager != null)
+                    {
+                        currentlySelectedManager.gameObject.GetComponentInChildren<Outline>().enabled = false;
+                        currentlySelectedManager = null;
+                    }
+                    if(agentCheck)
+                    {
+                        currentlySelectedAgent = agentCheck;
+                        currentlySelectedAgent.gameObject.GetComponentInChildren<Outline>().enabled = true;
+                    }
+                    else
+                    {
+                        currentlySelectedManager = managerCheck;
+                        currentlySelectedManager.gameObject.GetComponentInChildren<Outline>().enabled = true;
+                    }
                 }
             }
         }
-        if(currentlySelectedAgent == null)
+        if(currentlySelectedAgent == null && currentlySelectedManager == null)
         {
             infoText.text = "No Agent Selected";
         }
-        else
+        else if(currentlySelectedAgent != null)
         {
             string text = "Worker type: ";
             if(currentlySelectedAgent is CubicleWorker)
@@ -196,9 +227,13 @@ public class GameManager : MonoBehaviour
             }
             text += "Hunger: " + currentlySelectedAgent.Hunger + "\n";
             text += "Thirst: " + currentlySelectedAgent.Thirst + "\n";
-            text += "Restlessness: " + currentlySelectedAgent.Restlessness + "\n";
+            text += "Restlessness: " + currentlySelectedAgent.Restlessness.ToString("0.00") + "\n";
             text += "Status: " + currentlySelectedAgent.CurrentStateString;
             infoText.text = text;
+        }
+        else if(currentlySelectedManager != null)
+        {
+            infoText.text = "Worker type: Manager\nStatus: " + currentlySelectedManager.CurrentStateString;
         }
     }
 }

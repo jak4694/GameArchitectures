@@ -166,6 +166,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
         if(Input.GetKeyDown(KeyCode.Tab))
         {
             UI.SetActive(!UI.activeSelf);
